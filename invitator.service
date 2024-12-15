@@ -1,0 +1,14 @@
+[Unit]
+Description=Invitator9001 - Event Invitation Manager
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/npm start
+WorkingDirectory=/opt/invitator9001
+Restart=always
+User=webapp
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target 

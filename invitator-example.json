@@ -1,0 +1,26 @@
+{
+    "title": "My Amazing Event",
+    "date": "31.12.2024 19:00",
+    "location": "123 Party Street, Partytown, Partyland",
+    "adminSecret": "your-secure-admin-secret",
+    "groupChat": "https://chat.whatsapp.com/invite/xyz",
+    "description": {
+        "intro": "I'd love to invite you to my chaotic homewarming / punch party.",
+        "paragraphs": [
+            "Do I have the slightest idea of how many people I can fit in my new flat or if there will be enough seating options? Yeah that's a hard no on both.",
+            "But to compensate for that, I also have no idea how to make good punch.",
+            "Anyway, I'm planning for a chill hang, and will try my best to keep Paul far away from any music choices so that it doesn't escalate in a conversation-drowning hard-style rave. (Yes Paul, this section is in every invite not just in yours.)"
+        ]
+    },
+    "eventInfo": {
+        "title": "Flo's Punch Party ☕️✨",
+        "durationHours": 8,
+        "details": [
+            {
+                "title": "Drinks",
+                "text": "There will be some basics, but bring what you like."
+            }
+        ]
+    },
+    "defaultTemplate": "Hey {name},\n\nYou're invited to my event! Would love to see you there.\n\nWhen: {date}\nWhere: {location}\n\nPlease let me know if you can make it!\n\nBest regards"
+}

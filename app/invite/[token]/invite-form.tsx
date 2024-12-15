@@ -1,0 +1,271 @@
+'use client'
+
+import { Invite } from "@prisma/client";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { useState } from "react";
+import { AcceptState } from "@/lib/accept-state";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
+import { EventDetails } from "@/lib/config";
+
+function generateICSContent(event: EventDetails) {
+    try {
+        let eventDate: Date | null = null;
+
+        // Try direct Date parsing first
+        eventDate = new Date(event.date);
+
+        // If invalid, try European format (DD.MM.YYYY)
+        if (isNaN(eventDate.getTime())) {
+            const [day, month, year] = event.date.split('.').map(n => parseInt(n, 10));
+            eventDate = new Date(year, month - 1, day);
+        }
+
+        // If invalid, try format like "30. November 19:00"
+        if (isNaN(eventDate.getTime())) {
+            const months: { [key: string]: number } = {
+                'january': 0, 'februar': 1, 'march': 2, 'april': 3,
+                'may': 4, 'june': 5, 'july': 6, 'august': 7,
+                'september': 8, 'october': 9, 'november': 10, 'december': 11
+            };
+
+            const match = event.date.toLowerCase().match(/(\d+)\.\s*(\w+)(?:\s+(\d{1,2}):(\d{2}))?/);
+            if (match) {
+                const [_, day, monthStr, hours = "0", minutes = "0"] = match;
+                const month = months[monthStr];
+
+                if (month !== undefined) {
+                    // Use current year if not specified
+                    const currentYear = new Date().getFullYear();
+                    eventDate = new Date(currentYear, month, parseInt(day),
+                        parseInt(hours), parseInt(minutes));
+                }
+            }
+        }
+
+        // If still invalid, return null
+        if (!eventDate || isNaN(eventDate.getTime())) {
+            return null;
+        }
+
+        const formatDate = (date: Date) => {
+            return date.toISOString()
+                .replace(/[-:]/g, '')
+                .split('.')[0] + 'Z';
+        };
+
+        // If no time was specified, set default time to noon
+        if (eventDate.getHours() === 0 && eventDate.getMinutes() === 0) {
+            eventDate.setHours(12, 0, 0, 0);
+        }
+
+        return `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+DTSTART:${formatDate(eventDate)}
+DTEND:${formatDate(new Date(eventDate.getTime() + event.eventInfo.durationHours * 60 * 60 * 1000))} 
+SUMMARY:${event.eventInfo.title}
+LOCATION:${event.location}
+DESCRIPTION:${event.description.intro}
+END:VEVENT
+END:VCALENDAR`;
+    } catch (error) {
+        return null;
+    }
+}
+
+export default function InviteForm({ invite: initialInvite, event }: { invite: Invite, event: EventDetails }) {
+
+    let [invite, setInvite] = useState(initialInvite)
+    let [newPlusOne, setNewPlusOne] = useState(initialInvite.plusOne)
+    let [loading, setLoading] = useState(false)
+
+    const { toast } = useToast()
+
+    const copyText = (text: string) => {
+        navigator.clipboard.writeText(text);
+        toast({
+            title: "📋 Copied to Clipboard",
+        })
+    }
+
+    const updateInvite = async (newInvite: Invite) => {
+        setLoading(true);
+        setNewPlusOne(newInvite.plusOne)
+        try {
+            const response = await fetch(`/api/invite/${invite.token}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Add any other headers as needed (e.g., authentication headers)
+                },
+                body: JSON.stringify(newInvite),
+            });
+
+            if (!response.ok) {
+                let message = (await response.json()).errorMessage
+                if (message) {
+                    throw new Error(message)
+                }
+
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            setInvite(await response.json());
+
+            if (newInvite.accepted == AcceptState.Accepted && newInvite.plusOne != invite.plusOne) {
+                toast({
+                    title: "✅ Updated Plus One",
+                })
+            }
+        } catch (error) {
+            //Handle any errors that occurred during the fetch
+            setNewPlusOne(invite.plusOne)
+            console.error('Fetch error:', error);
+            toast({
+                title: "Something went wrong!",
+                description: `${error}`,
+            })
+        }
+
+        setLoading(false);
+    };
+
+    const downloadCalendarFile = () => {
+        const icsContent = generateICSContent(event);
+        if (!icsContent) return;
+
+        const blob = new Blob([icsContent], { type: 'text/calendar' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'punch-party.ics');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    };
+
+    return (
+        <main className="pt-24 pb-10 px-10 lg:px-12 max-w-2xl mx-auto">
+            <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl pb-6">
+                Hi {invite.name}!
+            </h1>
+
+            <div className="pb-4 text-slate-500">
+                <p className="pb-2">
+                    {event.description.intro}
+                </p>
+                {event.description.paragraphs.map((paragraph, index) => (
+                    <p key={index} className="pb-2">
+                        {paragraph}
+                    </p>
+                ))}
+            </div>
+
+            <Card className="mb-4">
+                <CardHeader>
+                    <CardTitle>The Hard Facts</CardTitle>
+                    <CardDescription>Flo&apos;s Punch Party ☕️✨</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="pb-3">
+                        <h3 className="font-bold">Date</h3>
+                        {event.date}
+                    </div>
+                    <div className="pb-3">
+                        <h3 className="font-bold">Location</h3>
+                        {event.location}
+                    </div>
+                    <div className="pb-3">
+                        <h3 className="font-bold">Drinks</h3>
+                        There will be some basics, but bring what you like.
+                    </div>
+                    <div className="space-x-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => copyText(`Flo's Punch Party ☕️✨\nDate: ${event.date}\nLocation: ${event.location}\nBring some drinks ;)`)}
+                        >Copy to Clipboard</Button>
+                        {generateICSContent(event) && (
+                            <Button
+                                variant="outline"
+                                onClick={downloadCalendarFile}
+                            >Add to Calendar 📅</Button>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+
+            {invite.accepted == AcceptState.Pending ? (
+                <div className="text-right">
+                    <Button disabled={loading} className="w-full mb-4" onClick={() => updateInvite({ ...invite, accepted: AcceptState.Accepted, plusOne: 0 })} >I&apos;m in! 🎂 🎉</Button>
+                    <Button disabled={loading} className="w-full" variant="secondary" onClick={() => updateInvite({ ...invite, accepted: AcceptState.Declined, plusOne: 0 })} > I won&apos;t attend 😔</Button>
+                </div>
+            ) : invite.accepted == AcceptState.Accepted ? (
+                <div className="pt-5 pb-2 relative">
+                    <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">Your in 🎉</h3>
+                    <div className="pb-2">
+                        That&apos;s amazing, there is a WhatsApp group again: <br />
+                        <a className="text-blue-500 hover:underline" href={event.groupChat}>{event.groupChat}</a>
+                    </div>
+                    <div className="pb-4">
+                        Do you plan on bringing a plus one and if so how many?
+                    </div>
+
+                    <div className="flex space-x-4">
+                        <Input type="number" placeholder="" className="max-w-64" value={newPlusOne} onChange={(e) => setNewPlusOne(e.target.valueAsNumber)} />
+                        <Button disabled={Number.isNaN(newPlusOne) || loading || newPlusOne == invite.plusOne} onClick={() => updateInvite({ ...invite, plusOne: newPlusOne })}>Update</Button>
+                    </div>
+
+                    <div className="h-full pt-8 space-y-4">
+                        <div>
+                            <Button
+                                className="relative overflow-hidden group"
+                                variant="outline"
+                                onClick={() => {
+                                    const button = document.querySelector('.uninvite-button') as HTMLElement;
+                                    if (button) {
+                                        button.style.transform = 'translateX(200%)';
+                                        setTimeout(() => {
+                                            updateInvite({ ...invite, accepted: AcceptState.Declined, plusOne: 0 })
+                                        }, 500);
+                                    }
+                                }}
+                            >
+                                <span className="uninvite-button inline-block transition-transform duration-500">
+                                    Uninvite me
+                                </span>
+                                <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    👋
+                                </span>
+                            </Button>
+                        </div>
+                        <div>
+                            <Button className="h-2 pl-0 text-left" variant="link" onClick={() => updateInvite({ ...invite, accepted: AcceptState.Pending, plusOne: 0 })}>Reset all my choices</Button>
+                            <span className="text-sm text-slate-500">
+                                <br />(Only affects your invite, cannot reset other life choices)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <div className="pt-5 pb-2">
+                    <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">You won&apos;t attend 😔</h3>
+                    That&apos;s ok, some people just don&apos;t know how to have fun.
+
+                    <div className="h-full pt-3">
+                        <Button className="pl-0" variant="link" onClick={() => updateInvite({ ...invite, accepted: AcceptState.Pending, plusOne: 0 })}>What? No! I am fun!</Button>
+                    </div>
+                </div>
+            )
+            }
+        </main >
+    );
+}
