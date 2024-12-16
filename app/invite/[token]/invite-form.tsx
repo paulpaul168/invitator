@@ -218,18 +218,18 @@ export default function InviteForm({ invite: initialInvite, event }: { invite: I
 
             {invite.accepted == AcceptState.Pending ? (
                 <div className="text-right">
-                    <Button disabled={loading} className="w-full mb-4" onClick={() => updateInvite({ ...invite, accepted: AcceptState.Accepted, plusOne: 0 })} >I&apos;m in! 🎂 🎉</Button>
-                    <Button disabled={loading} className="w-full" variant="secondary" onClick={() => updateInvite({ ...invite, accepted: AcceptState.Declined, plusOne: 0 })} > I won&apos;t attend 😔</Button>
+                    <Button disabled={loading} className="w-full mb-4" onClick={() => updateInvite({ ...invite, accepted: AcceptState.Accepted, plusOne: 0 })} >Ich bin dabei! 🎂 🎉</Button>
+                    <Button disabled={loading} className="w-full" variant="secondary" onClick={() => updateInvite({ ...invite, accepted: AcceptState.Declined, plusOne: 0 })} >Ich kann leider nicht 😔</Button>
                 </div>
             ) : invite.accepted == AcceptState.Accepted ? (
                 <div className="pt-5 pb-2 relative">
-                    <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">Your in 🎉</h3>
+                    <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">Du bist dabei 🎉</h3>
                     <div className="pb-2">
-                        That&apos;s amazing, there is a WhatsApp group again: <br />
-                        <a className="text-blue-500 hover:underline" href={event.groupChat}>{event.groupChat}</a>
+                        Das ist super! Hier sind die Chat-Gruppen: <br />
+                        <a className="text-blue-500 hover:underline" href={event.groupChat}>WhatsApp</a> · <a className="text-blue-500 hover:underline" href={event.groupChatTelegram}>Telegram</a>
                     </div>
                     <div className="pb-4">
-                        Do you plan on bringing a plus one and if so how many?
+                        Planst du jemanden mitzubringen und wenn ja, wie viele?
                     </div>
 
                     <div className="flex space-x-4">
@@ -243,24 +243,21 @@ export default function InviteForm({ invite: initialInvite, event }: { invite: I
                                 variant="outline"
                                 onClick={() => updateInvite({ ...invite, accepted: AcceptState.Declined, plusOne: 0 })}
                             >
-                                Uninvite me 👋
+                                Abmelden 👋
                             </Button>
                         </div>
                         <div>
-                            <Button className="h-2 pl-0 text-left" variant="link" onClick={() => updateInvite({ ...invite, accepted: AcceptState.Pending, plusOne: 0 })}>Reset all my choices</Button>
-                            <span className="text-sm text-slate-500">
-                                <br />(Only affects your invite, cannot reset other life choices)
-                            </span>
+                            <Button className="h-2 pl-0 text-left" variant="link" onClick={() => updateInvite({ ...invite, accepted: AcceptState.Pending, plusOne: 0 })}>Alle meine Entscheidungen zurücksetzen</Button>
                         </div>
                     </div>
                 </div>
             ) : (
                 <div className="pt-5 pb-2">
-                    <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">You won&apos;t attend 😔</h3>
-                    That&apos;s ok, some people just don&apos;t know how to have fun.
+                    <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">Du kommst nicht 😔</h3>
+                    Schade, manche Leute wissen einfach nicht, wie man Spaß hat.
 
                     <div className="h-full pt-3">
-                        <Button className="pl-0" variant="link" onClick={() => updateInvite({ ...invite, accepted: AcceptState.Pending, plusOne: 0 })}>What? No! I am fun!</Button>
+                        <Button className="pl-0" variant="link" onClick={() => updateInvite({ ...invite, accepted: AcceptState.Pending, plusOne: 0 })}>Was? Nein! Ich bin lustig!</Button>
                     </div>
                 </div>
             )

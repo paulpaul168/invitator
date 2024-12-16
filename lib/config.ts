@@ -1,6 +1,7 @@
 import { readFile } from 'fs/promises';
 
 export interface EventDetails {
+    groupChatTelegram: string | undefined;
     date: string;
     location: string;
     groupChat: string;
@@ -29,6 +30,7 @@ export async function getEventDetails(): Promise<EventDetails> {
         location: config.location,
         date: config.date,
         groupChat: config.groupChat,
+        groupChatTelegram: config.groupChatTelegram,
         maxPlusOne: config.maxPlusOne,
         description: config.description,
         eventInfo: config.eventInfo,
