@@ -1,49 +1,100 @@
 # invitator9001
 
-An over engineered invitation management webapp.
+A modern, feature-rich event invitation management system built with Next.js 14. This project is inspired by birthdaiii but extends the functionality with additional features for comprehensive event management.
 
 ## Features
-- Keep track of who you invite and who accepts.
-- Send out customized links for each guest.
-- Write an invitation template and automatically fill in the name.
-- Modern, responsive design.
-- Secure admin interface.
 
-## Run it yourself
+- 🎯 Streamlined guest tracking and RSVP management
+- 🔗 Unique invitation links for each guest
+- 📝 Customizable invitation templates with dynamic content
+- 📱 WhatsApp and Telegram integration for sending invites
+- 📅 Calendar integration (ICS file generation)
+- 👥 Plus-one guest management
+- 🌙 Dark mode support
+- 🔒 Secure admin interface
+- 📊 Real-time attendance tracking
+- 💬 Group chat links for WhatsApp and Telegram
+
+## Tech Stack
+
+- Next.js 14 with App Router
+- TypeScript
+- Prisma with SQLite
+- Tailwind CSS
+- shadcn/ui components
+
+## Setup
+
+1. Clone the repository:
+```bash
+git clone https://github.com/paulpaul168/invitator.git
+cd invitator
 ```
+
+2. Install dependencies:
+```bash
 npm install
+```
+
+3. Create your configuration:
+```bash
 cp invitator-example.json invitator.json
+```
+
+4. Configure your event details in `invitator.json`. Make sure to update:
+   - Event title and description
+   - Date and location
+   - Admin secret
+   - Group chat links
+   - Plus-one settings
+
+5. Set up the database:
+```bash
 npx prisma db push
+```
+
+6. Start the development server:
+```bash
 npm run dev
 ```
 
-**Note:** For production deployment, use `npm run build && npm run start` instead of the development server.
+## Production Deployment
+
+1. Build the application:
+```bash
+npm run build
+```
+
+2. Start the production server:
+```bash
+npm start
+```
+
+For systemd-based deployments, a service file is provided in `invitator.service`.
 
 ## Configuration
 
-Configuration is handled through `invitator.json` (create this from the provided example file). This file contains:
-- Event details
-- Location information
-- Admin secret
-- Custom messaging templates
+The `invitator.json` file controls all event-specific settings. Key configuration options include:
 
-The example configuration file (`invitator-example.json`) is provided as a template.
+- `title`: Event title
+- `date`: Event date and time
+- `location`: Event location
+- `adminSecret`: Secret key for admin access
+- `groupChat`: WhatsApp group chat link
+- `groupChatTelegram`: Telegram group chat link
+- `maxPlusOne`: Maximum number of additional guests allowed
+- `description`: Event description and details
+- `eventInfo`: Additional event information
 
-## Usage
+## Contributing
 
-1. Access the admin interface at `/admin/{secret}` (secret is defined in `invitator.json`)
-2. Create invitations for your guests
-3. Customize the invitation template
-4. Share the generated invitation links
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
-Each guest gets a unique URL to respond to their invitation.
+## License
 
-## Deployment
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-The application can be deployed as a systemd user service on Linux. A sample service configuration is provided in `invitator.service`.
+## Acknowledgments
 
-## Tech Stack
-- Next.js
-- Prisma
-- TypeScript
-- Tailwind CSS
+- Inspired by [birthdaiii](https://github.com/flofriday/birthdaiii)
+- Built with [shadcn/ui](https://ui.shadcn.com/) components
