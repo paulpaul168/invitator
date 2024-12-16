@@ -197,7 +197,7 @@ export default function InviteForm({ invite: initialInvite, event }: { invite: I
                                 .replace('$location', event.location)}
                         </div>
                     ))}
-                    <div className="space-x-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                         <Button
                             variant="outline"
                             onClick={() => copyText(`${event.hardFacts.title}\n${event.hardFacts.sections.map(s =>
@@ -205,12 +205,16 @@ export default function InviteForm({ invite: initialInvite, event }: { invite: I
                                     .replace('$date', event.date)
                                     .replace('$location', event.location)}`
                             ).join('\n')}`)}
-                        >Copy to Clipboard</Button>
+                        >
+                            Copy to Clipboard
+                        </Button>
                         {generateICSContent(event) && (
                             <Button
                                 variant="outline"
                                 onClick={downloadCalendarFile}
-                            >Add to Calendar 📅</Button>
+                            >
+                                Add to Calendar 📅
+                            </Button>
                         )}
                     </div>
                 </CardContent>
