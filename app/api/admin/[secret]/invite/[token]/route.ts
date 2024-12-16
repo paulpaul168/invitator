@@ -28,3 +28,23 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { secret: string, token: string } }
+) {
+  try {
+    await prisma.invite.delete({
+      where: {
+        token: params.token
+      }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json(
+      { errorMessage: `Failed to delete invite: ${error}` },
+      { status: 500 }
+    );
+  }
+}

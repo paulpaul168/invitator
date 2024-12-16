@@ -72,9 +72,7 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                    // Add any other headers as needed (e.g., authentication headers)
-                },
-                body: "",
+                }
             });
 
             if (!response.ok) {
