@@ -22,6 +22,8 @@ model Invite {
   accepted  String
   plusOne   Int
   phone     String?
+  whatsappSent DateTime?
+  telegramSent DateTime?
 }
 
 // FIXME: Should be an enum but sqlite adapter doesn't allow it

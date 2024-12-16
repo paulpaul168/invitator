@@ -19,33 +19,48 @@ function generateICSContent(event: EventDetails) {
     try {
         let eventDate: Date | null = null;
 
-        // Try direct Date parsing first
-        eventDate = new Date(event.date);
-
-        // If invalid, try European format (DD.MM.YYYY)
-        if (isNaN(eventDate.getTime())) {
-            const [day, month, year] = event.date.split('.').map(n => parseInt(n, 10));
-            eventDate = new Date(year, month - 1, day);
+        // Try parsing DD.MM.YYYY HH:mm format first
+        const dateTimeMatch = event.date.match(/(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})/);
+        if (dateTimeMatch) {
+            const [_, day, month, year, hours, minutes] = dateTimeMatch;
+            eventDate = new Date(
+                parseInt(year),
+                parseInt(month) - 1,
+                parseInt(day),
+                parseInt(hours),
+                parseInt(minutes)
+            );
         }
 
-        // If invalid, try format like "30. November 19:00"
-        if (isNaN(eventDate.getTime())) {
-            const months: { [key: string]: number } = {
-                'january': 0, 'februar': 1, 'march': 2, 'april': 3,
-                'may': 4, 'june': 5, 'july': 6, 'august': 7,
-                'september': 8, 'october': 9, 'november': 10, 'december': 11
-            };
+        // If still invalid, try other formats as fallback
+        if (!eventDate || isNaN(eventDate.getTime())) {
+            // Try direct Date parsing
+            eventDate = new Date(event.date);
 
-            const match = event.date.toLowerCase().match(/(\d+)\.\s*(\w+)(?:\s+(\d{1,2}):(\d{2}))?/);
-            if (match) {
-                const [_, day, monthStr, hours = "0", minutes = "0"] = match;
-                const month = months[monthStr];
+            // If invalid, try European format (DD.MM.YYYY)
+            if (isNaN(eventDate.getTime())) {
+                const [day, month, year] = event.date.split('.').map(n => parseInt(n, 10));
+                eventDate = new Date(year, month - 1, day);
+            }
 
-                if (month !== undefined) {
-                    // Use current year if not specified
-                    const currentYear = new Date().getFullYear();
-                    eventDate = new Date(currentYear, month, parseInt(day),
-                        parseInt(hours), parseInt(minutes));
+            // If invalid, try format like "30. November 19:00"
+            if (isNaN(eventDate.getTime())) {
+                const months: { [key: string]: number } = {
+                    'january': 0, 'februar': 1, 'march': 2, 'april': 3,
+                    'may': 4, 'june': 5, 'july': 6, 'august': 7,
+                    'september': 8, 'october': 9, 'november': 10, 'december': 11
+                };
+
+                const match = event.date.toLowerCase().match(/(\d+)\.\s*(\w+)(?:\s+(\d{1,2}):(\d{2}))?/);
+                if (match) {
+                    const [_, day, monthStr, hours = "0", minutes = "0"] = match;
+                    const month = months[monthStr];
+
+                    if (month !== undefined) {
+                        const currentYear = new Date().getFullYear();
+                        eventDate = new Date(currentYear, month, parseInt(day),
+                            parseInt(hours), parseInt(minutes));
+                    }
                 }
             }
         }
@@ -61,10 +76,8 @@ function generateICSContent(event: EventDetails) {
                 .split('.')[0] + 'Z';
         };
 
-        // If no time was specified, set default time to noon
-        if (eventDate.getHours() === 0 && eventDate.getMinutes() === 0) {
-            eventDate.setHours(12, 0, 0, 0);
-        }
+        // Remove the default noon setting - we'll use the actual time from the date string
+        // If no time was specified in the date string, the hours and minutes will already be 0
 
         return `BEGIN:VCALENDAR
 VERSION:2.0
@@ -146,7 +159,7 @@ export default function InviteForm({ invite: initialInvite, event }: { invite: I
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', 'punch-party.ics');
+        link.setAttribute('download', 'invite.ics');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

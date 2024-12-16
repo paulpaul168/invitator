@@ -24,10 +24,11 @@ export default function Home() {
         <div className="bg-muted p-6 rounded-lg">
           <h2 className="text-2xl font-bold mb-4">Enhanced Features</h2>
           <ul className="list-disc list-inside space-y-2">
+            <li>Dark mode support</li>
             <li>All original birthdaiii capabilities</li>
             <li>Extended guest management system</li>
             <li>More customization options</li>
-            <li>Additional tracking features</li>
+            <li>Additional WhatsApp and Telegram sending</li>
           </ul>
         </div>
 

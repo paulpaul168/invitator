@@ -29,7 +29,6 @@ export async function getEventDetails(): Promise<EventDetails> {
         location: config.location,
         date: config.date,
         groupChat: config.groupChat,
-        title: config.eventInfo.title,
         maxPlusOne: config.maxPlusOne,
         description: config.description,
         eventInfo: config.eventInfo,

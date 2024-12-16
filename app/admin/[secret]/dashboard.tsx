@@ -32,6 +32,8 @@ import { toast } from "@/components/ui/use-toast";
 import { AcceptState } from "@/lib/accept-state";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Link from "next/dist/client/link";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 function acceptStateToEmoji(state: string): string {
     switch (state) {
@@ -178,6 +180,58 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
         return `https://t.me/${cleanPhone}?text=${encodedMessage}`;
     };
 
+    function parseVcf(vcfText: string): string {
+        let result: string[] = [];
+        let currentEntry: Record<string, string> = {};
+
+        for (let line of vcfText.split('\n')) {
+            line = line.trim();
+
+            if (line === 'BEGIN:VCARD') {
+                currentEntry = {};
+            } else if (line === 'END:VCARD') {
+                if (currentEntry['FN'] && currentEntry['TEL']) {
+                    const firstName = currentEntry['FN'].split(' ')[0];
+                    result.push(`${firstName} ${currentEntry['FN']} ${currentEntry['TEL']}`);
+                }
+            } else if (line.startsWith('FN:')) {
+                currentEntry['FN'] = line.substring(3);
+            } else if (line.startsWith('TEL;') && !currentEntry['TEL']) {
+                currentEntry['TEL'] = line.split(':')[1];
+            }
+        }
+
+        return result.join('\n');
+    }
+
+    const updateSentStatus = async (invite: Invite, platform: 'whatsapp' | 'telegram') => {
+        try {
+            const response = await fetch(`/api/admin/${adminSecret}/invite/${invite.token}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ...invite,
+                    [`${platform}Sent`]: new Date().toISOString(),
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const updatedInvite = await response.json();
+            setInvites(invites.map(i => i.token === invite.token ? updatedInvite : i));
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Failed to update sent status",
+                description: `${error}`,
+            });
+        }
+    };
+
     return (
         <main className="pt-24 pb-10 px-12 max-w-6xl mx-auto">
             <div className="flex justify-between">
@@ -194,16 +248,46 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                             <DialogHeader>
                                 <DialogTitle>Add Invite(s)</DialogTitle>
                                 <DialogDescription>
-                                    To create an invite write `nickname fullname phonenumber`.
+                                    Enter invites manually or upload a VCF file. Format: `nickname fullname phonenumber`.
                                     The fullname can have spaces. Phone number should include country code (e.g., +491234567890).
-                                    You can create multiple by writing multiple lines.
                                 </DialogDescription>
                             </DialogHeader>
-                            <Textarea placeholder="Maxl Max Musterman" value={newInviteText} onChange={(e) => setNewInviteText(e.target.value)} />
-                            <div className="text-right">
-                                <DialogClose asChild>
-                                    <Button onClick={async () => { await addNewInvites(newInviteText) }}>Add</Button>
-                                </DialogClose>
+                            <div className="space-y-4">
+                                <div className="grid w-full items-center gap-1.5">
+                                    <Label htmlFor="vcf">Upload VCF</Label>
+                                    <Input
+                                        id="vcf"
+                                        type="file"
+                                        accept=".vcf,text/vcard"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+
+                                            const reader = new FileReader();
+                                            reader.onload = (e) => {
+                                                const text = e.target?.result;
+                                                if (typeof text === 'string') {
+                                                    setNewInviteText(parseVcf(text));
+                                                }
+                                            };
+                                            reader.readAsText(file);
+                                        }}
+                                    />
+                                </div>
+                                <div className="grid w-full items-center gap-1.5">
+                                    <Label htmlFor="manual">Or enter manually</Label>
+                                    <Textarea
+                                        id="manual"
+                                        placeholder="Maxl Max Musterman"
+                                        value={newInviteText}
+                                        onChange={(e) => setNewInviteText(e.target.value)}
+                                    />
+                                </div>
+                                <div className="text-right">
+                                    <DialogClose asChild>
+                                        <Button onClick={async () => { await addNewInvites(newInviteText) }}>Add</Button>
+                                    </DialogClose>
+                                </div>
                             </div>
                         </DialogContent>
                     </Dialog>
@@ -282,114 +366,120 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {invites.map((invite: Invite) => (
-                                        <TableRow key={invite.fullName}>
-                                            <TableCell className="font-medium">{invite.name}</TableCell>
-                                            <TableCell>{invite.fullName}</TableCell>
+                                    {invites
+                                        .sort((a, b) => a.name.localeCompare(b.name))
+                                        .map((invite: Invite) => (
+                                            <TableRow key={invite.fullName}>
+                                                <TableCell className="font-medium">{invite.name}</TableCell>
+                                                <TableCell>{invite.fullName}</TableCell>
 
-                                            {/* FIXME: some more visual idicator */}
-                                            <TableCell>{acceptStateToEmoji(invite.accepted)} {invite.accepted}</TableCell>
-                                            <TableCell>{invite.plusOne}</TableCell>
-                                            <TableCell>
-                                                <Button disabled={inviteMessage == null || inviteMessage.trim() == ""} variant="outline" className="text-sm transition-all" onClick={() => copyText(craftInviteMessage(invite), `Invite message for ${invite.name}`)}>
-                                                    Copy Invite
-                                                </Button>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Dialog>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost"> <MoreVertical></MoreVertical></Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent>
-                                                            <DropdownMenuItem onClick={() => copyText(`${window.origin}/invite/${invite.token}`, `Invite URL for ${invite.name}`)}>Copy URL</DropdownMenuItem>
-                                                            <DropdownMenuItem><Link href={`/invite/${invite.token}`}>Check Invite</Link></DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                onClick={async () => {
-                                                                    try {
-                                                                        const response = await fetch(`/api/invite/${invite.token}`, {
-                                                                            method: 'PATCH',
-                                                                            headers: {
-                                                                                'Content-Type': 'application/json',
-                                                                            },
-                                                                            body: JSON.stringify({ ...invite, accepted: AcceptState.Pending, plusOne: 0 }),
-                                                                        });
+                                                {/* FIXME: some more visual idicator */}
+                                                <TableCell>{acceptStateToEmoji(invite.accepted)} {invite.accepted}</TableCell>
+                                                <TableCell>{invite.plusOne}</TableCell>
+                                                <TableCell>
+                                                    <Button disabled={inviteMessage == null || inviteMessage.trim() == ""} variant="outline" className="text-sm transition-all" onClick={() => copyText(craftInviteMessage(invite), `Invite message for ${invite.name}`)}>
+                                                        Copy Invite
+                                                    </Button>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Dialog>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost"> <MoreVertical></MoreVertical></Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent>
+                                                                <DropdownMenuItem onClick={() => copyText(`${window.origin}/invite/${invite.token}`, `Invite URL for ${invite.name}`)}>Copy URL</DropdownMenuItem>
+                                                                <DropdownMenuItem><Link href={`/invite/${invite.token}`}>Check Invite</Link></DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onClick={async () => {
+                                                                        try {
+                                                                            const response = await fetch(`/api/invite/${invite.token}`, {
+                                                                                method: 'PATCH',
+                                                                                headers: {
+                                                                                    'Content-Type': 'application/json',
+                                                                                },
+                                                                                body: JSON.stringify({ ...invite, accepted: AcceptState.Pending, plusOne: 0 }),
+                                                                            });
 
-                                                                        if (!response.ok) {
-                                                                            throw new Error(`HTTP error! Status: ${response.status}`);
+                                                                            if (!response.ok) {
+                                                                                throw new Error(`HTTP error! Status: ${response.status}`);
+                                                                            }
+
+                                                                            const updatedInvite = await response.json();
+                                                                            setInvites(invites.map(i => i.token === invite.token ? updatedInvite : i));
+
+                                                                            toast({
+                                                                                title: "Reset Choices",
+                                                                                description: `Reset choices for ${invite.name}`,
+                                                                            });
+                                                                        } catch (error) {
+                                                                            toast({
+                                                                                variant: "destructive",
+                                                                                title: "Something went wrong!",
+                                                                                description: `${error}`,
+                                                                            });
                                                                         }
-
-                                                                        const updatedInvite = await response.json();
-                                                                        setInvites(invites.map(i => i.token === invite.token ? updatedInvite : i));
-
-                                                                        toast({
-                                                                            title: "Reset Choices",
-                                                                            description: `Reset choices for ${invite.name}`,
-                                                                        });
-                                                                    } catch (error) {
-                                                                        toast({
-                                                                            variant: "destructive",
-                                                                            title: "Something went wrong!",
-                                                                            description: `${error}`,
-                                                                        });
-                                                                    }
+                                                                    }}
+                                                                >
+                                                                    Reset Choices
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuSeparator />
+                                                                <DialogTrigger asChild>
+                                                                    <DropdownMenuItem><span className="text-red-600">Delete</span></DropdownMenuItem>
+                                                                </DialogTrigger>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                        <DialogContent>
+                                                            <DialogHeader>
+                                                                <DialogTitle>Deleting {invite.name} {invite.fullName}?</DialogTitle>
+                                                                <DialogDescription>
+                                                                    Deleting an invite cannot be reverted. Also their invite URl will no longer work.
+                                                                </DialogDescription>
+                                                            </DialogHeader>
+                                                            <DialogFooter>
+                                                                <Button variant="destructive" onClick={async () => await deleteInvite(invite)}>Delete</Button>
+                                                            </DialogFooter>
+                                                        </DialogContent>
+                                                    </Dialog>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {invite.phone && (
+                                                        <div className="flex space-x-2">
+                                                            <Button
+                                                                variant="outline"
+                                                                className={`text-sm transition-all ${invite.whatsappSent ? 'text-gray-400' : ''
+                                                                    }`}
+                                                                onClick={() => {
+                                                                    const whatsappLink = generateWhatsAppLink(
+                                                                        invite.phone!,
+                                                                        craftInviteMessage(invite)
+                                                                    );
+                                                                    window.open(whatsappLink, '_blank');
+                                                                    updateSentStatus(invite, 'whatsapp');
                                                                 }}
                                                             >
-                                                                Reset Choices
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DialogTrigger asChild>
-                                                                <DropdownMenuItem><span className="text-red-600">Delete</span></DropdownMenuItem>
-                                                            </DialogTrigger>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                    <DialogContent>
-                                                        <DialogHeader>
-                                                            <DialogTitle>Deleting {invite.name} {invite.fullName}?</DialogTitle>
-                                                            <DialogDescription>
-                                                                Deleting an invite cannot be reverted. Also their invite URl will no longer work.
-                                                            </DialogDescription>
-                                                        </DialogHeader>
-                                                        <DialogFooter>
-                                                            <Button variant="destructive" onClick={async () => await deleteInvite(invite)}>Delete</Button>
-                                                        </DialogFooter>
-                                                    </DialogContent>
-                                                </Dialog>
-                                            </TableCell>
-                                            <TableCell>
-                                                {invite.phone && (
-                                                    <div className="flex space-x-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            className="text-sm transition-all"
-                                                            onClick={() => {
-                                                                const whatsappLink = generateWhatsAppLink(
-                                                                    invite.phone!,
-                                                                    craftInviteMessage(invite)
-                                                                );
-                                                                window.open(whatsappLink, '_blank');
-                                                            }}
-                                                        >
-                                                            Send WhatsApp
-                                                        </Button>
-                                                        <Button
-                                                            variant="outline"
-                                                            className="text-sm transition-all"
-                                                            onClick={() => {
-                                                                const telegramLink = generateTelegramLink(
-                                                                    invite.phone!,
-                                                                    craftInviteMessage(invite)
-                                                                );
-                                                                window.open(telegramLink, '_blank');
-                                                            }}
-                                                        >
-                                                            Send Telegram
-                                                        </Button>
-                                                    </div>
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
+                                                                {invite.whatsappSent ? 'WhatsApp Sent' : 'Send WhatsApp'}
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline"
+                                                                className={`text-sm transition-all ${invite.telegramSent ? 'text-gray-400' : ''
+                                                                    }`}
+                                                                onClick={() => {
+                                                                    const telegramLink = generateTelegramLink(
+                                                                        invite.phone!,
+                                                                        craftInviteMessage(invite)
+                                                                    );
+                                                                    window.open(telegramLink, '_blank');
+                                                                    updateSentStatus(invite, 'telegram');
+                                                                }}
+                                                            >
+                                                                {invite.telegramSent ? 'Telegram Sent' : 'Send Telegram'}
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
                                 </TableBody>
                             </Table>
                         </Card>)
