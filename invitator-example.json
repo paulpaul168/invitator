@@ -4,6 +4,7 @@
     "location": "123 Party Street, Partytown, Partyland",
     "adminSecret": "your-secure-admin-secret",
     "groupChat": "https://chat.whatsapp.com/invite/xyz",
+    "groupChatTelegram": "https://t.me/xyz",
     "maxPlusOne": 2,
     "description": {
         "intro": "I'd love to invite you to my chaotic homewarming / punch party.",
