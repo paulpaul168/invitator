@@ -2,8 +2,6 @@
 
 An over engineered invitation management webapp.
 
-![Screenshot](screenshot.png)
-
 ## Features
 - Keep track of who you invite and who accepts.
 - Send out customized links for each guest.
