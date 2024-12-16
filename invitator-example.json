@@ -7,15 +7,14 @@
     "groupChatTelegram": "https://t.me/xyz",
     "maxPlusOne": 2,
     "description": {
-        "intro": "I'd love to invite you to my chaotic homewarming / punch party.",
+        "intro": "Welcome to this totally-planned-out gathering that definitely won't end in chaos.",
         "paragraphs": [
-            "Do I have the slightest idea of how many people I can fit in my new flat or if there will be enough seating options? Yeah that's a hard no on both.",
-            "But to compensate for that, I also have no idea how to make good punch.",
-            "Anyway, I'm planning for a chill hang, and will try my best to keep Paul far away from any music choices so that it doesn't escalate in a conversation-drowning hard-style rave. (Yes Paul, this section is in every invite not just in yours.)"
+            "Have I done any actual planning regarding space, seating, or basic party logistics? Let's just say I'm embracing spontaneity.",
+            "But hey, what's the worst that could happen? (Please don't answer that.)"
         ]
     },
     "eventInfo": {
-        "title": "Flo's Punch Party ☕️✨",
+        "title": "The Event ✨",
         "durationHours": 8,
         "details": [
             {
