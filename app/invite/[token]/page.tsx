@@ -12,8 +12,8 @@ export async function generateMetadata({ params }: { params: { token: string } }
     let eventDetails = await getEventDetails()
 
     return {
-        title: `Hi ${invite.name}!`,
-        description: `Invitation to my punch party, on the ${eventDetails.date}. Click the link to accept or decline.`
+        title: `Hallo ${invite.name}!`,
+        description: `Einladung zur ${eventDetails.eventInfo.title}, am ${eventDetails.date}. Klicke hier um zu- oder abzusagen.`
     }
 }
 
