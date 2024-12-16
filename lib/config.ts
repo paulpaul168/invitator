@@ -1,21 +1,25 @@
 import { readFile } from 'fs/promises';
 
-export type EventDetails = {
-    location: string;
+export interface EventDetails {
     date: string;
+    location: string;
     groupChat: string;
-    title: string;
+    maxPlusOne: number;
+    eventInfo: {
+        title: string;
+        durationHours: number;
+    };
     description: {
         intro: string;
         paragraphs: string[];
     };
-    eventInfo: {
+    hardFacts: {
         title: string;
-        durationHours: number;
-        details: Array<{
+        subtitle: string;
+        sections: {
             title: string;
-            text: string;
-        }>;
+            content: string;
+        }[];
     };
 }
 
@@ -26,8 +30,10 @@ export async function getEventDetails(): Promise<EventDetails> {
         date: config.date,
         groupChat: config.groupChat,
         title: config.eventInfo.title,
+        maxPlusOne: config.maxPlusOne,
         description: config.description,
-        eventInfo: config.eventInfo
+        eventInfo: config.eventInfo,
+        hardFacts: config.hardFacts
     }
 }
 

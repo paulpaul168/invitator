@@ -170,6 +170,14 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
         return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
     };
 
+    const generateTelegramLink = (phone: string, message: string) => {
+        // Remove any non-numeric characters from phone
+        const cleanPhone = phone.replace(/\D/g, '');
+        // Encode the message for URL
+        const encodedMessage = encodeURIComponent(message);
+        return `https://t.me/${cleanPhone}?text=${encodedMessage}`;
+    };
+
     return (
         <main className="pt-24 pb-10 px-12 max-w-6xl mx-auto">
             <div className="flex justify-between">
@@ -296,10 +304,43 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                                                         <DropdownMenuContent>
                                                             <DropdownMenuItem onClick={() => copyText(`${window.origin}/invite/${invite.token}`, `Invite URL for ${invite.name}`)}>Copy URL</DropdownMenuItem>
                                                             <DropdownMenuItem><Link href={`/invite/${invite.token}`}>Check Invite</Link></DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onClick={async () => {
+                                                                    try {
+                                                                        const response = await fetch(`/api/invite/${invite.token}`, {
+                                                                            method: 'PATCH',
+                                                                            headers: {
+                                                                                'Content-Type': 'application/json',
+                                                                            },
+                                                                            body: JSON.stringify({ ...invite, accepted: AcceptState.Pending, plusOne: 0 }),
+                                                                        });
+
+                                                                        if (!response.ok) {
+                                                                            throw new Error(`HTTP error! Status: ${response.status}`);
+                                                                        }
+
+                                                                        const updatedInvite = await response.json();
+                                                                        setInvites(invites.map(i => i.token === invite.token ? updatedInvite : i));
+
+                                                                        toast({
+                                                                            title: "Reset Choices",
+                                                                            description: `Reset choices for ${invite.name}`,
+                                                                        });
+                                                                    } catch (error) {
+                                                                        toast({
+                                                                            variant: "destructive",
+                                                                            title: "Something went wrong!",
+                                                                            description: `${error}`,
+                                                                        });
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Reset Choices
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuSeparator />
                                                             <DialogTrigger asChild>
                                                                 <DropdownMenuItem><span className="text-red-600">Delete</span></DropdownMenuItem>
                                                             </DialogTrigger>
-
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                     <DialogContent>
@@ -317,19 +358,34 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                                             </TableCell>
                                             <TableCell>
                                                 {invite.phone && (
-                                                    <Button
-                                                        variant="outline"
-                                                        className="text-sm transition-all"
-                                                        onClick={() => {
-                                                            const whatsappLink = generateWhatsAppLink(
-                                                                invite.phone!,
-                                                                craftInviteMessage(invite)
-                                                            );
-                                                            window.open(whatsappLink, '_blank');
-                                                        }}
-                                                    >
-                                                        Send WhatsApp
-                                                    </Button>
+                                                    <div className="flex space-x-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            className="text-sm transition-all"
+                                                            onClick={() => {
+                                                                const whatsappLink = generateWhatsAppLink(
+                                                                    invite.phone!,
+                                                                    craftInviteMessage(invite)
+                                                                );
+                                                                window.open(whatsappLink, '_blank');
+                                                            }}
+                                                        >
+                                                            Send WhatsApp
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            className="text-sm transition-all"
+                                                            onClick={() => {
+                                                                const telegramLink = generateTelegramLink(
+                                                                    invite.phone!,
+                                                                    craftInviteMessage(invite)
+                                                                );
+                                                                window.open(telegramLink, '_blank');
+                                                            }}
+                                                        >
+                                                            Send Telegram
+                                                        </Button>
+                                                    </div>
                                                 )}
                                             </TableCell>
                                         </TableRow>

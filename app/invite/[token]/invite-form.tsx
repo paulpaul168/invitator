@@ -172,26 +172,26 @@ export default function InviteForm({ invite: initialInvite, event }: { invite: I
 
             <Card className="mb-4">
                 <CardHeader>
-                    <CardTitle>The Hard Facts</CardTitle>
-                    <CardDescription>Flo&apos;s Punch Party ☕️✨</CardDescription>
+                    <CardTitle>{event.hardFacts.title}</CardTitle>
+                    <CardDescription>{event.hardFacts.subtitle}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="pb-3">
-                        <h3 className="font-bold">Date</h3>
-                        {event.date}
-                    </div>
-                    <div className="pb-3">
-                        <h3 className="font-bold">Location</h3>
-                        {event.location}
-                    </div>
-                    <div className="pb-3">
-                        <h3 className="font-bold">Drinks</h3>
-                        There will be some basics, but bring what you like.
-                    </div>
+                    {event.hardFacts.sections.map((section, index) => (
+                        <div key={index} className="pb-3">
+                            <h3 className="font-bold">{section.title}</h3>
+                            {section.content
+                                .replace('$date', event.date)
+                                .replace('$location', event.location)}
+                        </div>
+                    ))}
                     <div className="space-x-2">
                         <Button
                             variant="outline"
-                            onClick={() => copyText(`Flo's Punch Party ☕️✨\nDate: ${event.date}\nLocation: ${event.location}\nBring some drinks ;)`)}
+                            onClick={() => copyText(`${event.hardFacts.title}\n${event.hardFacts.sections.map(s =>
+                                `${s.title}: ${s.content
+                                    .replace('$date', event.date)
+                                    .replace('$location', event.location)}`
+                            ).join('\n')}`)}
                         >Copy to Clipboard</Button>
                         {generateICSContent(event) && (
                             <Button
@@ -227,24 +227,10 @@ export default function InviteForm({ invite: initialInvite, event }: { invite: I
                     <div className="h-full pt-8 space-y-4">
                         <div>
                             <Button
-                                className="relative overflow-hidden group"
                                 variant="outline"
-                                onClick={() => {
-                                    const button = document.querySelector('.uninvite-button') as HTMLElement;
-                                    if (button) {
-                                        button.style.transform = 'translateX(200%)';
-                                        setTimeout(() => {
-                                            updateInvite({ ...invite, accepted: AcceptState.Declined, plusOne: 0 })
-                                        }, 500);
-                                    }
-                                }}
+                                onClick={() => updateInvite({ ...invite, accepted: AcceptState.Declined, plusOne: 0 })}
                             >
-                                <span className="uninvite-button inline-block transition-transform duration-500">
-                                    Uninvite me
-                                </span>
-                                <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                    👋
-                                </span>
+                                Uninvite me 👋
                             </Button>
                         </div>
                         <div>

@@ -1,5 +1,6 @@
 import { getInviteByToken, updateInvite } from "@/lib/invite-service";
 import { Invite } from "@prisma/client";
+import { getEventDetails } from "@/lib/config";
 
 export const dynamic = "force-dynamic"; // defaults to auto
 export async function PATCH(
@@ -16,6 +17,7 @@ export async function PATCH(
     return Response.json({}, { status: 400 });
   }
 
+  const eventDetails = await getEventDetails();
   if (newInvite.plusOne < 0) {
     return Response.json(
       {
@@ -25,10 +27,10 @@ export async function PATCH(
       { status: 400 }
     );
   }
-  if (newInvite.plusOne > 4) {
+  if (newInvite.plusOne > eventDetails.maxPlusOne) {
     return Response.json(
       {
-        errorMessage: `Come on that's kinda rude to bring ${newInvite.plusOne} strangers to a party.`,
+        errorMessage: `Sorry, you can only bring up to ${eventDetails.maxPlusOne} additional guests.`,
       },
       { status: 400 }
     );
