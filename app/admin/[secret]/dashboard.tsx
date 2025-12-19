@@ -26,7 +26,7 @@ import { EventDetails } from "@/lib/config";
 import { Invite } from "@prisma/client";
 import { Span } from "next/dist/trace";
 import { useEffect, useState } from "react";
-import { MoreVertical } from "lucide-react"
+import { MoreVertical, Download, Upload } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { AcceptState } from "@/lib/accept-state";
@@ -294,6 +294,87 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
         }
     };
 
+    const exportData = async () => {
+        try {
+            const response = await fetch(`/api/admin/${adminSecret}/invite/export`);
+
+            if (!response.ok) {
+                let message = (await response.json()).errorMessage
+                if (message) {
+                    throw new Error(message)
+                }
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `invitator-export-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            toast({
+                title: "Export Complete",
+                description: `Exported ${data.invites.length} invites`,
+            });
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Export failed!",
+                description: `${error}`,
+            });
+        }
+    };
+
+    const importData = async (file: File) => {
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+
+            const response = await fetch(`/api/admin/${adminSecret}/invite/import`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                let message = (await response.json()).errorMessage
+                if (message) {
+                    throw new Error(message)
+                }
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            setInvites(result.invites);
+
+            toast({
+                title: "Import Complete",
+                description: result.message,
+            });
+
+            if (result.errors && result.errors.length > 0) {
+                toast({
+                    variant: "destructive",
+                    title: "Some imports failed",
+                    description: result.errors.slice(0, 3).join('\n'),
+                });
+            }
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Import failed!",
+                description: `${error}`,
+            });
+        }
+    };
+
     return (
         <main className="pt-24 pb-10 px-12 max-w-6xl mx-auto">
             <div className="flex justify-between">
@@ -301,7 +382,29 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                     Admin Dashboard
                 </h1>
 
-                <div className="flex space-x-4">
+                <div className="flex space-x-2 flex-wrap gap-y-2">
+                    <Button variant="outline" onClick={exportData}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Export
+                    </Button>
+                    <Button variant="outline" asChild>
+                        <label className="cursor-pointer">
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import
+                            <input
+                                type="file"
+                                accept=".json"
+                                className="hidden"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        importData(file);
+                                        e.target.value = '';
+                                    }
+                                }}
+                            />
+                        </label>
+                    </Button>
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button variant="secondary">Add Invite(s)</Button>
@@ -361,7 +464,7 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                             <DialogHeader>
                                 <DialogTitle>Reset All Sent Status</DialogTitle>
                                 <DialogDescription>
-                                    This will reset the WhatsApp and Telegram sent status for all invites. 
+                                    This will reset the WhatsApp and Telegram sent status for all invites.
                                     The person list and their RSVP responses will remain unchanged.
                                 </DialogDescription>
                             </DialogHeader>
@@ -383,7 +486,7 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                             <DialogHeader>
                                 <DialogTitle>Reset All Data</DialogTitle>
                                 <DialogDescription>
-                                    This will reset ALL data for all invites, including RSVP responses, plus ones, 
+                                    This will reset ALL data for all invites, including RSVP responses, plus ones,
                                     and sent status. Only names and phone numbers will be kept.
                                     This action cannot be undone!
                                 </DialogDescription>
@@ -547,10 +650,10 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                                                                                 headers: {
                                                                                     'Content-Type': 'application/json',
                                                                                 },
-                                                                                body: JSON.stringify({ 
-                                                                                    ...invite, 
-                                                                                    whatsappSent: null, 
-                                                                                    telegramSent: null 
+                                                                                body: JSON.stringify({
+                                                                                    ...invite,
+                                                                                    whatsappSent: null,
+                                                                                    telegramSent: null
                                                                                 }),
                                                                             });
 
