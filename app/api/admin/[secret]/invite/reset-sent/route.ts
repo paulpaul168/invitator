@@ -7,8 +7,8 @@ export async function POST(
   { params }: { params: { secret: string } }
 ) {
   try {
-    if (params.secret != await getAdminSecret()) {
-      return Response.json({ errorMessage: "You are not the admin!" }, { status: 403 })
+    if (params.secret !== await getAdminSecret()) {
+      return NextResponse.json({ errorMessage: "You are not the admin!" }, { status: 403 })
     }
 
     // Update all invites to reset their sent status
