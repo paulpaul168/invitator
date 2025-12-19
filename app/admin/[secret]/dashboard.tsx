@@ -418,13 +418,23 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                             </span>
                         </div>
                         <div className="pb-2">
-                            <h5 className="font-bold">Invites sent</h5>
+                            <h5 className="font-bold">Total Invites</h5>
                             <span>
                                 {invites.length}
                             </span>
                         </div>
                         <div className="pb-2">
-                            <h5 className="font-bold">Pending</h5>
+                            <h5 className="font-bold">Messages Sent</h5>
+                            <span>
+                                {
+                                    invites
+                                        .filter(i => i.whatsappSent || i.telegramSent)
+                                        .length
+                                }
+                            </span>
+                        </div>
+                        <div className="pb-2">
+                            <h5 className="font-bold">Pending Response</h5>
                             <span>
                                 {
                                     invites
