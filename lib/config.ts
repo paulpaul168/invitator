@@ -6,6 +6,7 @@ export interface EventDetails {
     location: string;
     groupChat: string;
     maxPlusOne: number;
+    fireworks: boolean;
     eventInfo: {
         title: string;
         durationHours: number;
@@ -32,6 +33,7 @@ export async function getEventDetails(): Promise<EventDetails> {
         groupChat: config.groupChat,
         groupChatTelegram: config.groupChatTelegram,
         maxPlusOne: config.maxPlusOne,
+        fireworks: config.fireworks ?? false,
         description: config.description,
         eventInfo: config.eventInfo,
         hardFacts: config.hardFacts

@@ -6,6 +6,7 @@
     "groupChat": "https://chat.whatsapp.com/invite/xyz",
     "groupChatTelegram": "https://t.me/xyz",
     "maxPlusOne": 2,
+    "fireworks": false,
     "description": {
         "intro": "Welcome to this totally-planned-out gathering that definitely won't end in chaos.",
         "paragraphs": [
@@ -23,5 +24,23 @@
             }
         ]
     },
-    "defaultTemplate": "Hey {name},\n\nYou're invited to my event! Would love to see you there.\n\nWhen: {date}\nWhere: {location}\n\nPlease let me know if you can make it!\n\nBest regards"
+    "defaultTemplate": "Hey {name},\n\nYou're invited to my event! Would love to see you there.\n\nWhen: {date}\nWhere: {location}\n\nPlease let me know if you can make it!\n\nBest regards",
+    "hardFacts": {
+        "title": "The Hard Facts",
+        "subtitle": "Everything you need to know",
+        "sections": [
+            {
+                "title": "Date",
+                "content": "$date"
+            },
+            {
+                "title": "Location",
+                "content": "$location"
+            },
+            {
+                "title": "Drinks",
+                "content": "Bring what you like to drink!"
+            }
+        ]
+    }
 }

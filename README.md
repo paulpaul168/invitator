@@ -14,6 +14,8 @@ A modern, feature-rich event invitation management system built with Next.js 14.
 - 🔒 Secure admin interface
 - 📊 Real-time attendance tracking
 - 💬 Group chat links for WhatsApp and Telegram
+- 🎆 Optional fireworks animation for festive events
+- 📤 Export/Import guest data as JSON
 
 ## Tech Stack
 
@@ -76,15 +78,31 @@ For systemd-based deployments, a service file is provided in `invitator.service`
 
 The `invitator.json` file controls all event-specific settings. Key configuration options include:
 
-- `title`: Event title
-- `date`: Event date and time
-- `location`: Event location
-- `adminSecret`: Secret key for admin access
-- `groupChat`: WhatsApp group chat link
-- `groupChatTelegram`: Telegram group chat link
-- `maxPlusOne`: Maximum number of additional guests allowed
-- `description`: Event description and details
-- `eventInfo`: Additional event information
+| Option | Type | Description |
+|--------|------|-------------|
+| `title` | string | Event title displayed in the browser tab |
+| `date` | string | Event date and time (format: `DD.MM.YYYY HH:mm`) |
+| `location` | string | Event location/address |
+| `adminSecret` | string | Secret key for admin dashboard access |
+| `groupChat` | string | WhatsApp group chat invite link |
+| `groupChatTelegram` | string | Telegram group chat invite link |
+| `maxPlusOne` | number | Maximum number of additional guests allowed per invite |
+| `fireworks` | boolean | Enable festive fireworks animation on invite pages (default: `false`) |
+| `description` | object | Event description with intro text and paragraphs |
+| `eventInfo` | object | Event info including title, duration, and details |
+| `hardFacts` | object | Key facts section with customizable sections |
+
+### Fireworks Animation
+
+Enable colorful fireworks animations on invitation pages - perfect for New Year's Eve parties or other celebrations!
+
+```json
+{
+    "fireworks": true
+}
+```
+
+Only set to `false` if you want to be responsible to make everybody very unhappy.
 
 ## Contributing
 
