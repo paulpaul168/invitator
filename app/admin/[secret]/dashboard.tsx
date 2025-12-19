@@ -262,6 +262,38 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
         }
     };
 
+    const resetAll = async () => {
+        try {
+            const response = await fetch(`/api/admin/${adminSecret}/invite/reset-all`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                let message = (await response.json()).errorMessage
+                if (message) {
+                    throw new Error(message)
+                }
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const updatedInvites = await response.json();
+            setInvites(updatedInvites);
+            toast({
+                title: "Reset All Complete",
+                description: `Reset all data for ${updatedInvites.length} invites (kept only names)`,
+            });
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Something went wrong!",
+                description: `${error}`,
+            });
+        }
+    };
+
     return (
         <main className="pt-24 pb-10 px-12 max-w-6xl mx-auto">
             <div className="flex justify-between">
@@ -323,7 +355,7 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                     </Dialog>
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline">Reset All Sent Status</Button>
+                            <Button variant="outline">Reset Sent Status</Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
@@ -338,7 +370,30 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                                     <Button variant="outline">Cancel</Button>
                                 </DialogClose>
                                 <DialogClose asChild>
-                                    <Button onClick={resetAllSentStatus}>Reset All</Button>
+                                    <Button onClick={resetAllSentStatus}>Reset</Button>
+                                </DialogClose>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="destructive">Reset All</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Reset All Data</DialogTitle>
+                                <DialogDescription>
+                                    This will reset ALL data for all invites, including RSVP responses, plus ones, 
+                                    and sent status. Only names and phone numbers will be kept.
+                                    This action cannot be undone!
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button variant="outline">Cancel</Button>
+                                </DialogClose>
+                                <DialogClose asChild>
+                                    <Button variant="destructive" onClick={resetAll}>Reset All</Button>
                                 </DialogClose>
                             </DialogFooter>
                         </DialogContent>
