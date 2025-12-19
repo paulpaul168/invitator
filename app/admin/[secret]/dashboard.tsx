@@ -230,6 +230,38 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
         }
     };
 
+    const resetAllSentStatus = async () => {
+        try {
+            const response = await fetch(`/api/admin/${adminSecret}/invite/reset-sent`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                let message = (await response.json()).errorMessage
+                if (message) {
+                    throw new Error(message)
+                }
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const updatedInvites = await response.json();
+            setInvites(updatedInvites);
+            toast({
+                title: "Reset All Sent Status",
+                description: `Reset sent status for all ${updatedInvites.length} invites`,
+            });
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Something went wrong!",
+                description: `${error}`,
+            });
+        }
+    };
+
     return (
         <main className="pt-24 pb-10 px-12 max-w-6xl mx-auto">
             <div className="flex justify-between">
@@ -289,7 +321,28 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                             </div>
                         </DialogContent>
                     </Dialog>
-                    {/* <Button variant="secondary"><MoreVertical /></Button> */}
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline">Reset All Sent Status</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Reset All Sent Status</DialogTitle>
+                                <DialogDescription>
+                                    This will reset the WhatsApp and Telegram sent status for all invites. 
+                                    The person list and their RSVP responses will remain unchanged.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button variant="outline">Cancel</Button>
+                                </DialogClose>
+                                <DialogClose asChild>
+                                    <Button onClick={resetAllSentStatus}>Reset All</Button>
+                                </DialogClose>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </div>
 
@@ -420,6 +473,43 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                                                                     }}
                                                                 >
                                                                     Reset Choices
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onClick={async () => {
+                                                                        try {
+                                                                            const response = await fetch(`/api/admin/${adminSecret}/invite/${invite.token}`, {
+                                                                                method: 'PATCH',
+                                                                                headers: {
+                                                                                    'Content-Type': 'application/json',
+                                                                                },
+                                                                                body: JSON.stringify({ 
+                                                                                    ...invite, 
+                                                                                    whatsappSent: null, 
+                                                                                    telegramSent: null 
+                                                                                }),
+                                                                            });
+
+                                                                            if (!response.ok) {
+                                                                                throw new Error(`HTTP error! Status: ${response.status}`);
+                                                                            }
+
+                                                                            const updatedInvite = await response.json();
+                                                                            setInvites(invites.map(i => i.token === invite.token ? updatedInvite : i));
+
+                                                                            toast({
+                                                                                title: "Reset Sent Status",
+                                                                                description: `Reset sent status for ${invite.name}`,
+                                                                            });
+                                                                        } catch (error) {
+                                                                            toast({
+                                                                                variant: "destructive",
+                                                                                title: "Something went wrong!",
+                                                                                description: `${error}`,
+                                                                            });
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    Reset Sent Status
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuSeparator />
                                                                 <DialogTrigger asChild>
