@@ -84,8 +84,9 @@ export async function POST(
           });
           imported++;
         }
-      } catch {
-        errors.push(`Failed to import ${invite?.fullName ?? "unknown"}`);
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : "unknown error";
+        errors.push(`Failed to import ${invite?.fullName ?? "unknown"}: ${detail}`);
         skipped++;
       }
     }

@@ -7,6 +7,7 @@
     "groupChatTelegram": "https://t.me/xyz",
     "maxPlusOne": 2,
     "fireworks": false,
+    "halloween": false,
     "description": {
         "intro": "Welcome to this totally-planned-out gathering that definitely won't end in chaos.",
         "paragraphs": [

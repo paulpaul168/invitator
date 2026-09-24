@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { EventDetails } from "@/lib/config";
 import Fireworks from "@/components/fireworks";
+import Halloween from "@/components/halloween";
 
 function generateICSContent(event: EventDetails) {
     try {
@@ -176,6 +177,7 @@ export default function InviteForm({ invite: initialInvite, event }: { invite: I
                 <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl pb-6">
                     Hi {invite.name}!
                 </h1>
+                {event.halloween && <Halloween />}
 
             <div className="pb-4 text-slate-500">
                 <p className="pb-2">

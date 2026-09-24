@@ -15,6 +15,7 @@ A modern, feature-rich event invitation management system built with Next.js 14.
 - 📊 Real-time attendance tracking
 - 💬 Group chat links for WhatsApp and Telegram
 - 🎆 Optional fireworks animation for festive events
+- 🎃 Optional Halloween pumpkins animation for spooky events
 - 📤 Export/Import guest data as JSON
 
 ## Tech Stack
@@ -90,6 +91,7 @@ The `invitator.json` file controls all event-specific settings. Key configuratio
 | `groupChatTelegram` | string | Telegram group chat invite link |
 | `maxPlusOne` | number | Maximum number of additional guests allowed per invite |
 | `fireworks` | boolean | Enable festive fireworks animation on invite pages (default: `false`) |
+| `halloween` | boolean | Enable spooky lighted pumpkins animation on invite pages (default: `false`) |
 | `description` | object | Event description with intro text and paragraphs |
 | `eventInfo` | object | Event info including title, duration, and details |
 | `hardFacts` | object | Key facts section with customizable sections |
@@ -105,6 +107,18 @@ Enable colorful fireworks animations on invitation pages - perfect for New Year'
 ```
 
 Only set to `false` if you want to be responsible to make everybody very unhappy.
+
+### Halloween Pumpkins
+
+Enable lighted jack-o'-lanterns and bats on invitation pages - perfect for Halloween parties!
+
+```json
+{
+    "halloween": true
+}
+```
+
+Uses free CC0 pumpkin graphics (see `public/halloween/ATTRIBUTION.txt`).
 
 ## Contributing
 

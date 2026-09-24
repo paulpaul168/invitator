@@ -1,0 +1,15 @@
+Halloween assets (CC0 / public domain)
+
+plumpkin.gif
+  Source: https://opengameart.org/content/jack-o-lantern-pumpkin
+  Author: pyranostudios
+  License: CC0
+
+anim_pumpkin.png
+  Source: https://opengameart.org/content/halloween-animation-pumpkin
+  Author: MELLE
+  License: CC0
+
+jackolantern.png, jackolantern-strip.png
+  Derived from anim_pumpkin.png (frame extract / horizontal strip, black made transparent)
+  License: CC0
