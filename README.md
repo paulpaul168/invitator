@@ -19,7 +19,7 @@ A modern, feature-rich event invitation management system built with Next.js 14.
 
 ## Tech Stack
 
-- Next.js 14 with App Router
+- Next.js 16 with App Router
 - TypeScript
 - Prisma with SQLite
 - Tailwind CSS
@@ -46,9 +46,11 @@ cp invitator-example.json invitator.json
 4. Configure your event details in `invitator.json`. Make sure to update:
    - Event title and description
    - Date and location
-   - Admin secret
+   - Admin secret (use a long random value, e.g. `openssl rand -hex 32`)
    - Group chat links
    - Plus-one settings
+
+   Admin URL: `/admin/<your-adminSecret>`
 
 5. Set up the database:
 ```bash

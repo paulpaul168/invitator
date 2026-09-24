@@ -1,13 +1,20 @@
-import { getAdminSecret } from "@/lib/config";
+import { isAdminSecret } from "@/lib/auth";
+import { AcceptState } from "@/lib/accept-state";
 import prisma from "@/lib/prisma";
+import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
+
+function isValidAcceptState(value: unknown): value is AcceptState {
+  return typeof value === "string" && Object.values(AcceptState).includes(value as AcceptState);
+}
 
 export async function POST(
   request: Request,
-  { params }: { params: { secret: string } }
+  { params }: { params: Promise<{ secret: string }> }
 ) {
   try {
-    if (params.secret !== await getAdminSecret()) {
+    const { secret } = await params;
+    if (!(await isAdminSecret(secret))) {
       return NextResponse.json({ errorMessage: "You are not the admin!" }, { status: 403 })
     }
 
@@ -26,6 +33,22 @@ export async function POST(
 
     for (const invite of body.invites) {
       try {
+        if (typeof invite?.name !== "string" || typeof invite?.fullName !== "string" || !invite.name || !invite.fullName) {
+          errors.push("Skipped invite with missing name/fullName");
+          skipped++;
+          continue;
+        }
+
+        if (invite.accepted != null && !isValidAcceptState(invite.accepted)) {
+          errors.push(`Invalid accept state for ${invite.fullName}`);
+          skipped++;
+          continue;
+        }
+
+        const plusOne = typeof invite.plusOne === "number" && Number.isInteger(invite.plusOne) && invite.plusOne >= 0
+          ? invite.plusOne
+          : 0;
+
         // Check if invite with this fullName already exists
         const existing = await prisma.invite.findUnique({
           where: { fullName: invite.fullName }
@@ -37,32 +60,32 @@ export async function POST(
             where: { fullName: invite.fullName },
             data: {
               name: invite.name,
-              phone: invite.phone || null,
-              accepted: invite.accepted,
-              plusOne: invite.plusOne || 0,
+              phone: typeof invite.phone === "string" ? invite.phone : null,
+              accepted: isValidAcceptState(invite.accepted) ? invite.accepted : AcceptState.Pending,
+              plusOne,
               whatsappSent: invite.whatsappSent ? new Date(invite.whatsappSent) : null,
               telegramSent: invite.telegramSent ? new Date(invite.telegramSent) : null,
             }
           });
           imported++;
         } else {
-          // Create new invite
+          // Always mint a fresh token; ignore client-supplied tokens
           await prisma.invite.create({
             data: {
               name: invite.name,
               fullName: invite.fullName,
-              token: invite.token || crypto.randomUUID(),
-              phone: invite.phone || null,
-              accepted: invite.accepted,
-              plusOne: invite.plusOne || 0,
+              token: randomBytes(16).toString("hex"),
+              phone: typeof invite.phone === "string" ? invite.phone : null,
+              accepted: isValidAcceptState(invite.accepted) ? invite.accepted : AcceptState.Pending,
+              plusOne,
               whatsappSent: invite.whatsappSent ? new Date(invite.whatsappSent) : null,
               telegramSent: invite.telegramSent ? new Date(invite.telegramSent) : null,
             }
           });
           imported++;
         }
-      } catch (error) {
-        errors.push(`Failed to import ${invite.fullName}: ${error}`);
+      } catch {
+        errors.push(`Failed to import ${invite?.fullName ?? "unknown"}`);
         skipped++;
       }
     }
@@ -76,9 +99,9 @@ export async function POST(
       errors: errors.length > 0 ? errors : undefined,
       invites,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
-      { errorMessage: `Failed to import: ${error}` },
+      { errorMessage: "Failed to import" },
       { status: 500 }
     );
   }

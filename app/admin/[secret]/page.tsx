@@ -1,11 +1,13 @@
-import { getAdminSecret, getEventDetails } from "@/lib/config";
+import { isAdminSecret } from "@/lib/auth";
+import { getEventDetails } from "@/lib/config";
 import { getAllInvites } from "@/lib/invite-service";
 import { notFound } from "next/navigation";
 import Dashboard from "./dashboard";
 
-export default async function Admin({ params }: { params: { secret: string } }) {
+export default async function Admin({ params }: { params: Promise<{ secret: string }> }) {
+    const { secret } = await params
 
-    if (params.secret != await getAdminSecret()) {
+    if (!(await isAdminSecret(secret))) {
         return notFound()
     }
 
@@ -13,7 +15,7 @@ export default async function Admin({ params }: { params: { secret: string } }) 
     let invites = await getAllInvites()
 
     return (
-        <Dashboard invites={invites} event={eventDetails} adminSecret={params.secret}></Dashboard>
+        <Dashboard invites={invites} event={eventDetails} adminSecret={secret}></Dashboard>
     )
 
 }

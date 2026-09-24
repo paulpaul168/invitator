@@ -118,9 +118,11 @@ export default function InviteForm({ invite: initialInvite, event }: { invite: I
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    // Add any other headers as needed (e.g., authentication headers)
                 },
-                body: JSON.stringify(newInvite),
+                body: JSON.stringify({
+                    accepted: newInvite.accepted,
+                    plusOne: newInvite.plusOne,
+                }),
             });
 
             if (!response.ok) {

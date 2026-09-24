@@ -1,13 +1,14 @@
-import { getAdminSecret } from "@/lib/config";
+import { isAdminSecret } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function POST(
-  request: Request,
-  { params }: { params: { secret: string } }
+  _request: Request,
+  { params }: { params: Promise<{ secret: string }> }
 ) {
   try {
-    if (params.secret !== await getAdminSecret()) {
+    const { secret } = await params;
+    if (!(await isAdminSecret(secret))) {
       return NextResponse.json({ errorMessage: "You are not the admin!" }, { status: 403 })
     }
 
@@ -25,7 +26,7 @@ export async function POST(
     return NextResponse.json(invites);
   } catch (error) {
     return NextResponse.json(
-      { errorMessage: `Failed to reset sent status: ${error}` },
+      { errorMessage: "Failed to reset sent status" },
       { status: 500 }
     );
   }

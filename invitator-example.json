@@ -2,7 +2,7 @@
     "title": "My Amazing Event",
     "date": "31.12.2024 19:00",
     "location": "123 Party Street, Partytown, Partyland",
-    "adminSecret": "your-secure-admin-secret",
+    "adminSecret": "CHANGE-ME-to-a-long-random-secret",
     "groupChat": "https://chat.whatsapp.com/invite/xyz",
     "groupChatTelegram": "https://t.me/xyz",
     "maxPlusOne": 2,

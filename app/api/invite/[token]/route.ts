@@ -1,24 +1,46 @@
-import { getInviteByToken, updateInvite } from "@/lib/invite-service";
-import { Invite } from "@prisma/client";
+import { getInviteByToken, updateInviteRsvp } from "@/lib/invite-service";
 import { getEventDetails } from "@/lib/config";
+import { AcceptState } from "@/lib/accept-state";
 
-export const dynamic = "force-dynamic"; // defaults to auto
+export const dynamic = "force-dynamic";
+
 export async function PATCH(
   request: Request,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
-  // Verify the user hasa token
-  if (getInviteByToken(params.token) == null) {
-    return Response.json({}, { status: 403 });
+  const { token } = await params;
+  const existing = await getInviteByToken(token);
+  if (existing == null) {
+    return Response.json({ errorMessage: "Invite not found" }, { status: 404 });
   }
 
-  let newInvite: Invite = await request.json();
-  if (newInvite.token != params.token) {
-    return Response.json({}, { status: 400 });
+  let body: { accepted?: string; plusOne?: number };
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ errorMessage: "Invalid JSON body" }, { status: 400 });
+  }
+
+  if (typeof body.accepted !== "string" || typeof body.plusOne !== "number") {
+    return Response.json(
+      { errorMessage: "accepted and plusOne are required" },
+      { status: 400 }
+    );
+  }
+
+  if (!Number.isInteger(body.plusOne)) {
+    return Response.json(
+      { errorMessage: "plusOne must be an integer" },
+      { status: 400 }
+    );
+  }
+
+  if (!Object.values(AcceptState).includes(body.accepted as AcceptState)) {
+    return Response.json({ errorMessage: "Invalid accept state" }, { status: 400 });
   }
 
   const eventDetails = await getEventDetails();
-  if (newInvite.plusOne < 0) {
+  if (body.plusOne < 0) {
     return Response.json(
       {
         errorMessage:
@@ -27,7 +49,7 @@ export async function PATCH(
       { status: 400 }
     );
   }
-  if (newInvite.plusOne > eventDetails.maxPlusOne) {
+  if (body.plusOne > eventDetails.maxPlusOne) {
     return Response.json(
       {
         errorMessage: `Sorry, you can only bring up to ${eventDetails.maxPlusOne} additional guests.`,
@@ -36,13 +58,17 @@ export async function PATCH(
     );
   }
 
-  let updatedInvite = await updateInvite(newInvite);
-  return Response.json(updatedInvite);
-}
-
-export async function GET(
-  request: Request,
-  { params }: { params: { token: string } }
-) {
-  return Response.json(params);
+  try {
+    const updatedInvite = await updateInviteRsvp(
+      token,
+      body.accepted,
+      body.plusOne
+    );
+    return Response.json(updatedInvite);
+  } catch {
+    return Response.json(
+      { errorMessage: "Failed to update invite" },
+      { status: 500 }
+    );
+  }
 }

@@ -24,16 +24,28 @@ import {
 } from "@/components/ui/dialog"
 import { EventDetails } from "@/lib/config";
 import { Invite } from "@prisma/client";
-import { Span } from "next/dist/trace";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { MoreVertical, Download, Upload } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { AcceptState } from "@/lib/accept-state";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import Link from "next/dist/client/link";
+import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+
+function subscribeInviteMessage(onStoreChange: () => void) {
+    window.addEventListener("storage", onStoreChange);
+    return () => window.removeEventListener("storage", onStoreChange);
+}
+
+function getInviteMessageSnapshot() {
+    return localStorage.getItem("inviteMessage") ?? "";
+}
+
+function getInviteMessageServerSnapshot() {
+    return "";
+}
 
 function acceptStateToEmoji(state: string): string {
     switch (state) {
@@ -48,15 +60,18 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
 
     let [invites, setInvites] = useState(initialInvites)
     let [newInviteText, setNewInviteText] = useState("")
-    let [inviteMessage, setInviteMessage] = useState<string | null>(null)
+    const storedInviteMessage = useSyncExternalStore(
+        subscribeInviteMessage,
+        getInviteMessageSnapshot,
+        getInviteMessageServerSnapshot
+    )
+    const [inviteMessageDraft, setInviteMessageDraft] = useState<string | null>(null)
+    const inviteMessage = inviteMessageDraft ?? storedInviteMessage
 
-    useEffect(() => {
-        if (inviteMessage !== null) {
-            return
-        }
-
-        setInviteMessage(localStorage.getItem("inviteMessage") ?? "")
-    }, [inviteMessage])
+    const setInviteMessage = (value: string) => {
+        localStorage.setItem("inviteMessage", value)
+        setInviteMessageDraft(value)
+    }
 
     const copyText = (text: string, description?: string) => {
         navigator.clipboard.writeText(text);
@@ -156,9 +171,6 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
     }
 
     const craftInviteMessage = (invite: Invite) => {
-        if (inviteMessage == null) {
-            return ""
-        }
         return inviteMessage.replaceAll("$name", invite.name).replaceAll("$inviteUrl", `${window.origin}/invite/${invite.token}`)
     }
 
@@ -554,9 +566,8 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                         <CardTitle>Invitation Message</CardTitle>
                     </CardHeader>
                     <CardContent >
-                        <Textarea className={"w-full transition transition-duration-500" + (inviteMessage == null ? "text-opacity-0" : "text-opacity-100")} disabled={inviteMessage == null} value={inviteMessage ?? ""} onChange={(e) => {
+                        <Textarea className="w-full" value={inviteMessage} onChange={(e) => {
                             setInviteMessage(e.target.value)
-                            localStorage.setItem('inviteMessage', e.target.value)
                         }
                         }></Textarea>
                     </CardContent>
@@ -596,7 +607,7 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
                                                 <TableCell>{acceptStateToEmoji(invite.accepted)} {invite.accepted}</TableCell>
                                                 <TableCell>{invite.plusOne}</TableCell>
                                                 <TableCell>
-                                                    <Button disabled={inviteMessage == null || inviteMessage.trim() == ""} variant="outline" className="text-sm transition-all" onClick={() => copyText(craftInviteMessage(invite), `Invite message for ${invite.name}`)}>
+                                                    <Button disabled={inviteMessage.trim() == ""} variant="outline" className="text-sm transition-all" onClick={() => copyText(craftInviteMessage(invite), `Invite message for ${invite.name}`)}>
                                                         Copy Invite
                                                     </Button>
                                                 </TableCell>
