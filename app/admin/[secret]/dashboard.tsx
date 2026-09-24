@@ -183,11 +183,12 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
     };
 
     const generateTelegramLink = (phone: string, message: string) => {
-        // Remove any non-numeric characters from phone
+        // Digits only, international format without leading +
         const cleanPhone = phone.replace(/\D/g, '');
-        // Encode the message for URL
         const encodedMessage = encodeURIComponent(message);
-        return `https://t.me/${cleanPhone}?text=${encodedMessage}`;
+        // Telegram phone deep links require the + prefix: t.me/+<phone>?text=...
+        // https://core.telegram.org/api/links#phone-number-links
+        return `https://t.me/+${cleanPhone}?text=${encodedMessage}`;
     };
 
     function parseVcf(vcfText: string): string {
