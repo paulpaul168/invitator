@@ -175,11 +175,12 @@ export default function Dashboard({ invites: initialInvites, event, adminSecret 
     }
 
     const generateWhatsAppLink = (phone: string, message: string) => {
-        // Remove any non-numeric characters from phone
+        // Digits only, international format without leading +
         const cleanPhone = phone.replace(/\D/g, '');
-        // Encode the message for URL
         const encodedMessage = encodeURIComponent(message);
-        return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+        // Use api.whatsapp.com directly — wa.me redirects corrupt 4-byte emoji
+        // sequences into U+FFFD (�) on desktop/web WhatsApp.
+        return `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`;
     };
 
     const generateTelegramLink = (phone: string, message: string) => {
