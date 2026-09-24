@@ -18,7 +18,8 @@ jobs:
         port: ${{ secrets.PORT }}
         script_stop: true
         script: |
-          cd invitator
+          export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+          cd "$HOME/invitator"
           git pull
           npm install
           npm run build
